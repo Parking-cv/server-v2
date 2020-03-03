@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  database:
+    image: mongo:4.2-bionic
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "admin"
+      MONGO_INITDB_ROOT_PASSWORD: "password"
+      MONGO_INITDB_DATABASE: "diddle_north"
+
+  app:
+    depends_on:
+      - database
+    build: .
+    ports:
+      - "4321:4321"
+    environment:
+      MONGO_URI: "mongodb://admin:password@localhost/diddle_north"
+
