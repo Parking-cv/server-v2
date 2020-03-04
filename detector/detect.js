@@ -5,8 +5,7 @@ exports.detect = (files, cb) => {
   const timestamp = files[0];
   files[0] = 'detector/Detector.py';
   try {
-    // const process = spawn('python', ...files);
-    const process = spawn('echo', ['1']);
+    const process = spawn('python', ...files);
     process.stdout.on('data', (data) => {
       mongo((err, db) => {
         if (err) console.error(err);
