@@ -14,6 +14,5 @@ app.use(cookieParser());
 
 app.use('/pi', piRouter);
 app.use('/api', apiRouter);
-app.use('/test', (req, res) => { res.send("Hello, World!") });
 
 module.exports = app;

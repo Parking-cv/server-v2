@@ -6,7 +6,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: "admin"
       MONGO_INITDB_ROOT_PASSWORD: "password"
-      MONGO_INITDB_DATABASE: "diddle_north"
+      MONGO_INITDB_DATABASE: "lot"
 
   app:
     depends_on:
@@ -15,5 +15,6 @@ services:
     ports:
       - "4321:4321"
     environment:
-      MONGO_URI: "mongodb://admin:password@localhost/diddle_north"
+      MONGO_URI: "mongodb://admin:password@localhost"
+      MONGO_DB: "lot"
 

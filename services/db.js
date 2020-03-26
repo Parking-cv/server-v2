@@ -7,7 +7,7 @@ exports.mongo = (cb) => {
     MongoClient.connect(process.env.MONGO_URI, (err, client) => {
       if (err) cb(err, null);
       else {
-        DB = client.db("diddle_north");
+        DB = client.db(process.env.MONGO_DB);
         cb(null, DB);
       }
     });

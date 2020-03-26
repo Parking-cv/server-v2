@@ -5,5 +5,7 @@ const apiController = require('../controllers/api');
 router.get('/count/:id',
   apiController.getCurrentCount);
 
-router.post('/events/:id',
+router.get('/events/:id',
   apiController.getHistoricalData);
+
+module.exports = router;

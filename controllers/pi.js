@@ -31,10 +31,20 @@ exports.frameHandler = (req, res) => {
     filenames[0].substring(dir.length + 7, filenames[0].length - 4)
   );
 
-  detect(filenames, (err) => {
+  detect(filenames, (err) => {{}
     fs.rmdirSync(dir, { recursive: true });
     numFolders -= 1;
     if (err) res.send(500).json({ err });
     else res.json({ "success": true });
   });
+};
+
+exports.testFrameHandler = (req, res) => {
+  const LotMap = require('../services/LotMap');
+
+  LotMap.record('lot', req.params.cnt, (err) => {
+    if (err) res.status(500).json({ err })
+  });
+
+  res.json({ success: true });
 };
