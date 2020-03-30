@@ -2,10 +2,10 @@ const router = require('express').Router();
 const apiController = require('../controllers/api');
 
 
-router.get('/count/:id',
+router.get('/count/:lotId',
   apiController.getCurrentCount);
 
-router.get('/events/:id',
+router.get('/events/:lotId',
   apiController.getHistoricalData);
 
 module.exports = router;

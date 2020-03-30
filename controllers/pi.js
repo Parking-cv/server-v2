@@ -25,13 +25,14 @@ exports.frameHandler = (req, res) => {
     );
   }));
 
-  // Place a single raw timestamp in array to be used in detect
-  // for database recording
-  filenames.unshift(
-    filenames[0].substring(dir.length + 7, filenames[0].length - 4)
+  // Timestamp to be used for database
+  const timestamp = new Date(
+    filenames[0].substring(
+      dir.length + 7, filenames[0].length - 4
+    )
   );
 
-  detect(filenames, (err) => {{}
+  detect(timestamp, filenames, req.params.lotId, (err) => {
     fs.rmdirSync(dir, { recursive: true });
     numFolders -= 1;
     if (err) res.send(500).json({ err });
@@ -42,9 +43,21 @@ exports.frameHandler = (req, res) => {
 exports.testFrameHandler = (req, res) => {
   const LotMap = require('../services/LotMap');
 
-  LotMap.record('lot', req.params.cnt, (err) => {
-    if (err) res.status(500).json({ err })
+  // Simulate a successful event detection
+  require('../services/db').mongo((err, db) => {
+    if (err) res.status(500).json({err});
+    else {
+      db.collection(req.params.lotId).insert({
+        "timestamp": new Date(),
+        "event": req.query.count
+      }, (err, result) => {
+        if (err) res.status(500).json({err});
+        else {
+          LotMap.record(req.params.lotId, req.query.count, (err) => { if (err) res.status(500).json({err}) });
+          res.json(result);
+        }
+      });
+    }
   });
 
-  res.json({ success: true });
 };

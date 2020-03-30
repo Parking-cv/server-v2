@@ -1,20 +1,43 @@
 const { mongo } = require('../services/db');
 const LotMap = require('../services/LotMap');
 
+/**
+ * Determine if a given string is valid date by parsing the string.
+ * If it is valid, return the Date object. Otherwise return null
+ * @param {String} dateString
+ * @returns {null|Date}
+ */
+function validDateOrNull(dateString) {
+  let d = new Date(dateString);
 
-exports.getCurrentCount = (req, res, next) => {
-  LotMap.get(req.params.id, (err, count) => {
+  if (d.toString() === 'Invalid Date') {
+    return null;
+  }
+
+  return d;
+}
+
+
+exports.getCurrentCount = (req, res) => {
+  LotMap.get(req.params.lotId, (err, count) => {
     if (err) res.status(404).json({ err });
     else res.json({ count });
   });
 };
 
-exports.getHistoricalData = (req, res, next) => {
+exports.getHistoricalData = (req, res) => {
   mongo((err, db) => {
     if (err) res.status(500).json({ err });
     else {
-      db.collection('lot')
-        .find()
+      const max = validDateOrNull(req.query.max) || new Date();
+      const min = validDateOrNull(req.query.min) || new Date('1970');
+      db.collection(req.params.lotId)
+        .find({
+          timestamp: {
+            $gte : min,
+            $lte : max
+          }
+        })
         .toArray((err, docs) => {
           if (err) res.status(500).json({ err });
           else res.json( docs );

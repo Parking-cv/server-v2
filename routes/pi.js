@@ -2,12 +2,12 @@ const router = require('express').Router();
 const fileUpload = require('express-fileupload');
 const { frameHandler, testFrameHandler } = require('../controllers/pi');
 
-router.post("/frames",
+router.post("/frames/:lotId",
   fileUpload({ /* File upload options */ }),
   frameHandler
 );
 
-router.post("/test/:cnt",
+router.post("/test/:lotId",
   testFrameHandler
 );
 

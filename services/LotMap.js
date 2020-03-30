@@ -19,3 +19,12 @@ exports.get = (lotId, cb) => {
   else
     cb(null, lots[lotId]);
 };
+
+exports.reset = (lotId, count, cb) => {
+  if (lots[lotId] === undefined)
+    cb(new Error("Lot ID not found"));
+  else
+    lots[lotId] = count;
+
+  cb(null);
+};
