@@ -1,5 +1,5 @@
 const { mongo } = require('../services/db');
-const LotMap = require('../services/LotMap');
+const LotStore = require('../services/LotStore');
 
 /**
  * Determine if a given string is valid date by parsing the string.
@@ -19,7 +19,7 @@ function validDateOrNull(dateString) {
 
 
 exports.getCurrentCount = (req, res) => {
-  LotMap.get(req.params.lotId, (err, count) => {
+  LotStore.get(req.params.lotId, (err, count) => {
     if (err) res.status(404).json({ err });
     else res.json({ count });
   });

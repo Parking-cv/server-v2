@@ -1,5 +1,5 @@
 const { mongo } = require('../services/db');
-const LotMap = require('../services/LotMap');
+const LotStore = require('../services/LotStore');
 
 const data = [
   {
@@ -56,7 +56,7 @@ exports.generateData = () => {
 
   // Record event in map
   data.forEach((event) => {
-    LotMap.record('lot', event.event, (err) => { if (err) console.error(err) });
+    LotStore.record('lot', event.event, (err) => { if (err) console.error(err) });
   });
 
   mongo((err, db) => {
