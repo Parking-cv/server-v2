@@ -11,3 +11,7 @@ RUN yes | apt install python3-opencv
 COPY requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
 
+COPY . .
+
+EXPOSE 5000
+CMD ["python3", "server.py"]

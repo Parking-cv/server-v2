@@ -2,23 +2,23 @@ version: '3'
 
 services:
   app:
-    depends_on:
-      - database
     build: .
     ports:
       - "4321:4321"
     environment:
-      MONGO_URI: "mongodb://admin:password@localhost"
+      PORT: "4321"
+      MONGO_URI: "mongodb+srv://valet-demo:kXlI1nGFx7AfjLbz@sandbox-egjgq.gcp.mongodb.net"
       MONGO_DB: "valet-demo"
+      TMP_DIR: "/ml/images"
+      ML_HOST: "ml"
+      ML_PORT: "5000"
     volumes:
       - image-data:/ml/images
 
   ml:
-    depends_on:
-      - database
     build: ./ml
     volumes:
-      - image-data:/images
+      - image-data:/ml/images
 
 volumes:
   image-data:

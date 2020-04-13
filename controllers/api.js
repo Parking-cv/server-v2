@@ -9,15 +9,17 @@ const LotStore = require('../services/LotStore');
  */
 function validDateOrNull(dateString) {
   let d = new Date(dateString);
-
   if (d.toString() === 'Invalid Date') {
     return null;
   }
-
   return d;
 }
 
-
+/**
+ * Get the current count for the requested lot
+ * @param req
+ * @param res
+ */
 exports.getCurrentCount = (req, res) => {
   LotStore.get(req.params.lotId, (err, count) => {
     if (err) res.status(404).json({ err });
@@ -25,6 +27,11 @@ exports.getCurrentCount = (req, res) => {
   });
 };
 
+/**
+ * Get all data between specified dates for a requested lot
+ * @param req
+ * @param res
+ */
 exports.getHistoricalData = (req, res) => {
   mongo((err, db) => {
     if (err) res.status(500).json({ err });

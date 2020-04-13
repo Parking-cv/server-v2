@@ -7,7 +7,7 @@ import imutils
 import numpy as np
 
 
-from flask import Flask
+from flask import Flask, request
 from collections import OrderedDict
 from scipy.spatial import distance as dist
 
@@ -186,18 +186,19 @@ def monitor(files):
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY=os.environ["SECRET_KEY"]
+#         SECRET_KEY=os.environ["SECRET_KEY"]
+        SECRET_KEY='abc123'
     )
 
     @app.route("/", methods=["POST"])
     def index():
-        return monitor(request.json)
+        return str(monitor(request.json))
 
     return app
 
 def main():
     # Pass filenames to detector via args
-    create_app().run()
+    create_app().run(host='0.0.0.0')
 
 
 if __name__ == '__main__':

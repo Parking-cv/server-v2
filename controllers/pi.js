@@ -1,91 +1,107 @@
 const fs = require('fs');
-const http = require('http');
-const { db } = require('../services/db');
+const { mongo, mongoConnect } = require('../services/db');
+const { postFileNames } = require('../services/ml');
+const LotStore = require('../services/LotStore');
 
+const filePrefix = process.env.TMP_DIR + '/tmp-';
 
 let numFolders = 0;
 
-exports.frameHandler = (req, res) => {
-  let dir = '/ml/images/tmp-' + numFolders++;
+/**
+ * Save an array of uploaded files to the filesystem and resolve with
+ * an array of the filenames, sorted by timestamp.  The timestamp
+ * must be the key for the uploaded file.
+ * @param reqFiles
+ * @returns {Promise<Object>}
+ */
+const saveFiles = (reqFiles) => {
+  let dir = filePrefix + numFolders++;
   let filenames = [];
 
-  // File operations
-  fs.mkdirSync(dir);
-  for (let timestamp of Object.keys(req.files)) {
-    // TODO don't hardcode file type
-    let filename = dir + '/image-' + timestamp + '.jpg';
-    req.files[timestamp].mv(filename, (err) => { if (err) console.error(err); });
-    filenames.push(filename);
-  }
-
-  filenames.sort(((a, b) => {
+  const byDate = (a, b) => {
     return new Date(
       a.substring(dir.length + 7, a.length - 4)
     ) > new Date(
       b.substring(dir.length + 7, b.length - 4)
     );
+  };
+
+  return new Promise(((resolve, reject) => {
+    fs.mkdirSync(dir);
+    for (let timestamp of Object.keys(reqFiles)) {
+      let filename = dir + '/image-' + timestamp + '.jpg';
+      reqFiles[timestamp].mv(filename, (err) => {if (err) reject(err)});
+      filenames.push(filename);
+    }
+    filenames.sort(byDate);
+    resolve({ dir, filenames });
   }));
-
-  // Timestamp to be used for database
-  const timestamp = new Date(
-    filenames[0].substring(
-      dir.length + 7, filenames[0].length - 4
-    )
-  );
-
-  let fileJson = JSON.stringify(filenames);
-
-  http.request({
-    hostname: 'ml',
-    port: 5000,
-    path: '/',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': fileJson.length
-    }
-  }, result => {
-    if (res.statusCode !== 200) {
-      console.error('Err: :' + res);
-    } else {
-      res.on('data', d => {
-
-      });
-    }
-  });
-
-  req.write();
-  req.end();
-
-  mongo((err, db) => {
-    if (err) console.error(err);
-    else {
-      db.collection(lotId).insert({
-        "timestamp": timestamp,
-        "event": data
-      }, (err, result) => {
-        if (err) cb(err);
-        else {
-          LotStore.record(lotId, data, (err) => {
-            if (err) cb(err)
-          });
-          console.log(result);
-        }
-      });
-    }
-  });
-
-  fs.rmdirSync(dir, { recursive: true });
-  numFolders -= 1;
-
-  if (err) res.send(500).json({ err });
-  else res.json({ "success": true });
-
 };
 
+/**
+ * Remove temporary folders once they are no longer in use
+ * @param dir Directory to delete
+ */
+const cleanTmpDir = (dir) => {
+  fs.rmdirSync(dir, { recursive: true });
+  numFolders -= 1;
+};
+
+/**
+ * Handles upload of files to the server.  Takes an array of filenames and saves them
+ * to a docker volume shared with the ml volume.
+ * @param req
+ * @param res
+ */
+exports.frameHandler = (req, res) => {
+  let reqDir;
+  let db;
+  mongoConnect()
+    .then(mongoClient => {
+      db = mongoClient;
+      return saveFiles(req.files);
+    })
+    .then(fileData => {
+      reqDir = fileData.dir;
+      return postFileNames(fileData)
+    })
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        let event = parseInt(data.event + '');
+        if (isNaN(event)) reject("Invalid response from ML server");
+        db.collection(req.params.lotId)
+          .insert({
+            'timestamp': data.timestamp,
+            'event': parseInt(data.event + '')
+          }, (err, result) => {
+            if (err) reject(err);
+            else resolve({ result, data });
+          });
+      });
+    })
+    .then(resultData => {
+      return new Promise((resolve, reject) => {
+        LotStore.record(
+          req.params.lotId,
+          resultData.data.event,
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+      });
+    })
+    .then(() => res.json({ success: true }))
+    .catch(err => res.status(500).json({ err }))
+    .finally(() => { if (reqDir) cleanTmpDir(reqDir) });
+};
+
+/**
+ * Route to test components of the system while bypassing the ML algorithm
+ * @param req
+ * @param res
+ */
 exports.testFrameHandler = (req, res) => {
   const LotStore = require('../services/LotStore');
-
   // Simulate a successful event detection
   mongo((err, db) => {
     if (err) res.status(500).json({err});
@@ -96,11 +112,14 @@ exports.testFrameHandler = (req, res) => {
       }, (err, result) => {
         if (err) res.status(500).json({err});
         else {
-          LotStore.record(req.params.lotId, req.query.count, (err) => { if (err) res.status(500).json({err}) });
+          LotStore.record(
+            req.params.lotId,
+            req.query.count,
+            (err) => { if (err) res.status(500).json({err})
+          });
           res.json(result);
         }
       });
     }
   });
-
 };
