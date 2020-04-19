@@ -1,20 +1,24 @@
 version: '3'
 
 services:
-  database:
-    image: mongo:4.2-bionic
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: "admin"
-      MONGO_INITDB_ROOT_PASSWORD: "password"
-      MONGO_INITDB_DATABASE: "lot"
-
   app:
-    depends_on:
-      - database
     build: .
     ports:
       - "4321:4321"
     environment:
-      MONGO_URI: "mongodb://admin:password@localhost"
-      MONGO_DB: "lot"
+      PORT: "4321"
+      MONGO_URI: "mongodb+srv://valet-demo:kXlI1nGFx7AfjLbz@sandbox-egjgq.gcp.mongodb.net"
+      MONGO_DB: "valet-demo"
+      TMP_DIR: "/ml/images"
+      ML_HOST: "ml"
+      ML_PORT: "5000"
+    volumes:
+      - image-data:/ml/images
 
+  ml:
+    build: ./ml
+    volumes:
+      - image-data:/ml/images
+
+volumes:
+  image-data:

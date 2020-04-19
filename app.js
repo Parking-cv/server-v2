@@ -3,7 +3,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
 ///////////// test ///////////////////
-require('./util/TestData').generateData();
+// require('./util/TestData').generateData();
 //////////////////////////////////////
 
 const piRouter = require('./routes/pi');

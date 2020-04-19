@@ -1,12 +1,16 @@
 #!/usr/local/bin/python
+import os
 import argparse
-from collections import OrderedDict
-
 import cv2
 import dlib
 import imutils
 import numpy as np
+
+
+from flask import Flask, request
+from collections import OrderedDict
 from scipy.spatial import distance as dist
+
 
 CONSIDER_CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
            "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
@@ -110,7 +114,7 @@ def monitor(files):
     trackableObjects = {}
     confidenceLevel = 0.9
     consider = ['car', 'motorbike', 'boat']
-    trainedModel = cv2.dnn.readNetFromCaffe('../../assets/deploy.prototxt', '../../assets/deploy.caffemodel')
+    trainedModel = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'deploy.caffemodel')
 
     # Iterate over each frame passed to the script
     for file in files:
@@ -179,17 +183,24 @@ def monitor(files):
     # This line will only be reached if we did not detect an entry or exit
     return count
 
+def create_app():
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_mapping(
+#         SECRET_KEY=os.environ["SECRET_KEY"]
+        SECRET_KEY='abc123'
+    )
+
+    @app.route("/", methods=["POST"])
+    def index():
+        return str(monitor(request.json))
+
+    return app
 
 def main():
     # Pass filenames to detector via args
-    parser = argparse.ArgumentParser()
-    parser.add_argument('files', nargs='+')
-    args = parser.parse_args()
-
-    # return monitor(args.files)
-    # testing only
-    print(monitor(args.files))
+    create_app().run(host='0.0.0.0')
 
 
 if __name__ == '__main__':
     main()
+
